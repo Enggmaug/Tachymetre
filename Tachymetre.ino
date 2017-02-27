@@ -1,5 +1,6 @@
 #include <SPI.h>
 #include <ILI9341_t3.h>
+#include <PID_v1.h>
 
 //SPI
 #define SPI_MOSI    11
@@ -14,6 +15,11 @@
 
 //TFT
 ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC, TFT_RST, SPI_MOSI, SPI_SCLK, SPI_MISO);
+
+//PID
+double Setpoint, Input, Output;
+PID myPID(&Input, &Output, &Setpoint,2,0,0, DIRECT);
+#define MOTOR_PIN  5
 
 volatile unsigned long StopTime;
 unsigned long StartTime, Measure;
@@ -55,7 +61,11 @@ unsigned int Count;
      Serial.println("Start");
      tft.println("Start");
 
-
+      //initialize PID
+  Input = 0;
+  Setpoint = 10;
+//turn the PID on
+  myPID.SetMode(AUTOMATIC);  
  }
  
  void loop()
@@ -69,7 +79,10 @@ unsigned int Count;
         StartTime = StopTime;
     
         Freq = 1000000.0/(double)Measure;
-
+        
+        Input = Freq;
+        myPID.Compute();
+        analogWrite(MOTOR_PIN,Output);
       
         Measured = false;
 
